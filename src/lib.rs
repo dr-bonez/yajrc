@@ -182,4 +182,20 @@ impl<T: RpcMethod> RpcResponse<T> {
                 .unwrap_or_else(|| serde_json::from_value(Value::Null).map_err(RpcError::from)),
         }
     }
+    pub fn from_result<E: Into<RpcError>>(res: Result<T::Response, E>) -> Self {
+        match res {
+            Ok(result) => RpcResponse {
+                jsonrpc: RpcVersion::V2,
+                id: None,
+                result: Some(result),
+                error: None,
+            },
+            Err(error) => RpcResponse {
+                jsonrpc: RpcVersion::V2,
+                id: None,
+                result: None,
+                error: Some(error.into()),
+            },
+        }
+    }
 }
