@@ -1,0 +1,17 @@
+[package]
+name = "yajrc"
+version = "0.1.0"
+authors = ["Aiden McClelland <me@drbonez.dev>"]
+edition = "2018"
+license = "MIT"
+readme = "README.md"
+description = "Yet Another JSON RPC Crate"
+keywords = ["json", "rpc"]
+documentation = "https://docs.rs/yajrc"
+repository = "https://github.com/dr-bonez/yajrc"
+
+[dependencies]
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
