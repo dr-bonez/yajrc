@@ -160,7 +160,11 @@ pub struct RpcResponse<T: RpcMethod = GenericRpcMethod> {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<Value>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<RpcError>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<T::Response>,
 }
 impl From<RpcError> for RpcResponse<GenericRpcMethod> {
