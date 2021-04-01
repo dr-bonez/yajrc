@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{borrow::Cow, marker::PhantomData};
 
 use serde::{
     de::{MapAccess, SeqAccess, Visitor},
@@ -6,12 +6,36 @@ use serde::{
 };
 use serde_json::Value;
 
-pub const GENERAL_ERROR: i32 = -1;
-pub const PARSE_ERROR: i32 = -32700;
-pub const INVALID_REQUEST_ERROR: i32 = -32600;
-pub const METHOD_NOT_FOUND_ERROR: i32 = -32601;
-pub const INVALID_PARAMS_ERROR: i32 = -32602;
-pub const INTERNAL_ERROR: i32 = -32603;
+pub const GENERAL_ERROR: RpcError = RpcError {
+    code: -1,
+    message: Cow::Borrowed("General error"),
+    data: None,
+};
+pub const PARSE_ERROR: RpcError = RpcError {
+    code: -32700,
+    message: Cow::Borrowed("Parse error"),
+    data: None,
+};
+pub const INVALID_REQUEST_ERROR: RpcError = RpcError {
+    code: -32600,
+    message: Cow::Borrowed("Invalid Request"),
+    data: None,
+};
+pub const METHOD_NOT_FOUND_ERROR: RpcError = RpcError {
+    code: -32601,
+    message: Cow::Borrowed("Method not found"),
+    data: None,
+};
+pub const INVALID_PARAMS_ERROR: RpcError = RpcError {
+    code: -32602,
+    message: Cow::Borrowed("Invalid params"),
+    data: None,
+};
+pub const INTERNAL_ERROR: RpcError = RpcError {
+    code: -32603,
+    message: Cow::Borrowed("Internal error"),
+    data: None,
+};
 
 fn deserialize_some<'de, D: Deserializer<'de>, T: Deserialize<'de>>(
     deserializer: D,
@@ -201,8 +225,8 @@ impl<'de> Deserialize<'de> for Id {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RpcRequest<T: RpcMethod> {
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct RpcRequest<T: RpcMethod = GenericRpcMethod> {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(deserialize_with = "deserialize_some")]
@@ -214,7 +238,7 @@ pub struct RpcRequest<T: RpcMethod> {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RpcError {
     pub code: i32,
-    pub message: String,
+    pub message: Cow<'static, str>,
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     #[serde(deserialize_with = "deserialize_some")]
@@ -241,7 +265,7 @@ where
 {
     fn from(err: E) -> Self {
         let err = err.into();
-        let code = if let Some(json_err) = err.downcast_ref::<serde_json::Error>() {
+        let mut res = if let Some(json_err) = err.downcast_ref::<serde_json::Error>() {
             if json_err.is_syntax() {
                 PARSE_ERROR
             } else {
@@ -250,11 +274,8 @@ where
         } else {
             GENERAL_ERROR
         };
-        RpcError {
-            code,
-            message: format!("{}", err),
-            data: None,
-        }
+        res.data = Some(Value::String(format!("{}", err)));
+        res
     }
 }
 
