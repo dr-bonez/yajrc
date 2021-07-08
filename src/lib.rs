@@ -401,10 +401,8 @@ where
         match &self.result {
             Ok(a) => {
                 map_ser.serialize_entry("result", a)?;
-                map_ser.serialize_entry("error", &Value::Null)?;
             }
             Err(e) => {
-                map_ser.serialize_entry("result", &Value::Null)?;
                 map_ser.serialize_entry("error", e)?;
             }
         }
@@ -448,10 +446,10 @@ where
                             id = Some(map.next_value()?);
                         }
                         "result" => {
-                            result = map.next_value()?;
+                            result = Some(map.next_value()?);
                         }
                         "error" => {
-                            error = map.next_value()?;
+                            error = Some(map.next_value()?);
                         }
                         _ => {
                             let _: Value = map.next_value()?;
