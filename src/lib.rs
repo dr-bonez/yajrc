@@ -396,7 +396,7 @@ where
     {
         use serde::ser::SerializeMap;
 
-        let mut map_ser = serializer.serialize_map(Some(4))?;
+        let mut map_ser = serializer.serialize_map(Some(3))?;
         map_ser.serialize_entry("jsonrpc", "2.0")?;
         match &self.result {
             Ok(a) => {
