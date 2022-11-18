@@ -118,6 +118,13 @@ pub struct GenericRpcMethod<Method: AsRef<str>, Params = AnyParams, Response = V
     params: PhantomData<Params>,
     response: PhantomData<Response>,
 }
+impl<Method: AsRef<str>, Params, Response> std::fmt::Debug
+    for GenericRpcMethod<Method, Params, Response>
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self.method.as_ref())
+    }
+}
 impl<Method: AsRef<str>, Params, Response> GenericRpcMethod<Method, Params, Response> {
     pub fn new(method: Method) -> Self {
         GenericRpcMethod {
@@ -205,7 +212,7 @@ impl<'de> Deserialize<'de> for AnyParams {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Id {
     Null,
     String(String),
@@ -304,6 +311,25 @@ impl<'de> Deserialize<'de> for Id {
             }
         }
         deserializer.deserialize_any(IdVisitor)
+    }
+}
+impl PartialOrd for Id {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        use std::cmp::Ordering::*;
+        match (self, other) {
+            (Id::Null, Id::Null) => Some(Equal),
+            (Id::Null, _) => Some(Less),
+            (_, Id::Null) => Some(Greater),
+            (Id::String(a), Id::String(b)) => a.partial_cmp(b),
+            (Id::String(_), _) => Some(Less),
+            (_, Id::String(_)) => Some(Greater),
+            (Id::Number(a), Id::Number(b)) => a.as_f64().partial_cmp(&b.as_f64()),
+        }
+    }
+}
+impl Ord for Id {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.partial_cmp(other).unwrap_or(std::cmp::Ordering::Equal)
     }
 }
 
