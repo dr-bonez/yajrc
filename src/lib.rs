@@ -47,7 +47,11 @@ pub enum SingleOrBatchRpcRequest<T: RpcMethod = AnyRpcMethod<'static>> {
     Single(RpcRequest<T>),
     Batch(Vec<RpcRequest<T>>),
 }
-impl Serialize for SingleOrBatchRpcRequest {
+impl<T> Serialize for SingleOrBatchRpcRequest<T>
+where
+    T: RpcMethod,
+    RpcRequest<T>: Serialize,
+{
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             SingleOrBatchRpcRequest::Single(s) => s.serialize(serializer),
@@ -55,11 +59,19 @@ impl Serialize for SingleOrBatchRpcRequest {
         }
     }
 }
-impl<'de> Deserialize<'de> for SingleOrBatchRpcRequest {
+impl<'de, T> Deserialize<'de> for SingleOrBatchRpcRequest<T>
+where
+    T: RpcMethod + Deserialize<'de>,
+    T::Params: Deserialize<'de>,
+{
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        struct ReqVisitor;
-        impl<'de> Visitor<'de> for ReqVisitor {
-            type Value = SingleOrBatchRpcRequest;
+        struct ReqVisitor<T>(PhantomData<T>);
+        impl<'de, T> Visitor<'de> for ReqVisitor<T>
+        where
+            T: RpcMethod + Deserialize<'de>,
+            T::Params: Deserialize<'de>,
+        {
+            type Value = SingleOrBatchRpcRequest<T>;
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
                 write!(
                     formatter,
@@ -103,7 +115,7 @@ impl<'de> Deserialize<'de> for SingleOrBatchRpcRequest {
                 }))
             }
         }
-        deserializer.deserialize_any(ReqVisitor)
+        deserializer.deserialize_any(ReqVisitor::<T>(PhantomData))
     }
 }
 

@@ -8,7 +8,7 @@ license = "MIT"
 name = "yajrc"
 readme = "README.md"
 repository = "https://github.com/dr-bonez/yajrc"
-version = "0.1.1"
+version = "0.1.2"
 
 [features]
 strict = []
