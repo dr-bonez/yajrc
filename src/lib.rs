@@ -130,6 +130,17 @@ pub struct GenericRpcMethod<Method: AsRef<str>, Params = AnyParams, Response = V
     params: PhantomData<Params>,
     response: PhantomData<Response>,
 }
+impl<Method: AsRef<str> + Clone, Params, Response> Clone
+    for GenericRpcMethod<Method, Params, Response>
+{
+    fn clone(&self) -> Self {
+        Self {
+            method: self.method.clone(),
+            params: PhantomData,
+            response: PhantomData,
+        }
+    }
+}
 impl<Method: AsRef<str>, Params, Response> std::fmt::Debug
     for GenericRpcMethod<Method, Params, Response>
 {
